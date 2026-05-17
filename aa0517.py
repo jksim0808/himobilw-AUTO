@@ -6,15 +6,15 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (차트 연동형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (클릭 연동형)", layout="wide")
 
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
+GEMINI_API_KEY = "새로_발급받은_API_키를_여기에_붙여넣으세요"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 실시간 네이버 증권 멀티 차트 시스템")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 표 직접 클릭형 차트 연동 시스템")
 
 # 백업용 마스터 리스트
 BACKUP_50_STOCKS = (
@@ -25,7 +25,7 @@ BACKUP_50_STOCKS = (
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
     "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
-    "유한양행:000100, 알테오জেন:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
+    "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
@@ -43,6 +43,8 @@ if 'run_analysis' not in st.session_state:
     st.session_state.run_analysis = False
 if 'api_error_msg' not in st.session_state:
     st.session_state.api_error_msg = ""
+if 'clicked_stock' not in st.session_state:
+    st.session_state.clicked_stock = None
 
 # ==========================================
 # 📊 상단 로직 설계서 브리핑
@@ -98,6 +100,7 @@ with ai_col1:
                             st.session_state['raw_input_area'] = cleaned_result
                             st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
                             st.session_state.api_error_msg = ""
+                            st.session_state.clicked_stock = None  # 신규 추천시 기존 선택 초기화
                     else:
                         st.session_state.api_error_msg = f"상태 코드: {response.status_code}\n내용: {response.text}"
                 except Exception as e:
@@ -217,71 +220,73 @@ if st.button("🚀 지난번 로직 적용 전수 분석 시작", use_container_
         st.session_state.final_warning = war_temp
         st.session_state.final_info = inf_temp
         st.session_state.run_analysis = True
+        st.session_state.clicked_stock = None  # 스크리닝 재가동시 선택 초기화
         st.rerun()
 
 # ==========================================
-# 📊 세션 고정식 데이터 대시보드 및 실시간 차트 연동 구역
+# 📊 [핵심 업그레이드] 표 직접 클릭 및 실시간 감지 대시보드 구역
 # ==========================================
-selected_code_to_chart = None
-selected_name_to_chart = ""
-
 col1, col2, col3 = st.columns(3)
 
+# 1. 매수 긍정 표
 with col1:
     st.markdown("<h4 style='color:#2e7d32; border-bottom:2px solid #2e7d32; padding-bottom:5px;'>📈 매수 긍정</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_success:
         df_suc = pd.DataFrame(st.session_state.final_success)
-        st.dataframe(df_suc, use_container_width=True, hide_index=True)
+        # on_select="rerun" 설정을 주어 마우스 클릭을 실시간으로 감지합니다.
+        event_suc = st.dataframe(df_suc, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
         
-        # 💡 지난번 연동 기능: 테이블 하단에서 즉시 선택 가능한 라디오 조율기
-        suc_options = [f"{s['종목명']} ({s['종목코드']})" for s in st.session_state.final_success]
-        selected_suc = st.radio("📈 매수 긍정 종목 차트 선택", ["선택 안 함"] + suc_options, key="suc_radio")
-        if selected_suc != "선택 안 함":
-            selected_code_to_chart = selected_suc.split("(")[1].replace(")", "").strip()
-            selected_name_to_chart = selected_suc.split(" ")[0].strip()
+        if event_suc and event_suc.get("selection") and event_suc["selection"].get("rows"):
+            selected_row_idx = event_suc["selection"]["rows"][0]
+            st.session_state.clicked_stock = st.session_state.final_success[selected_row_idx]
 
+# 2. 진입 조율 필요 표
 with col2:
     st.markdown("<h4 style='color:#fbc02d; border-bottom:2px solid #fbc02d; padding-bottom:5px;'>⚠️ 진입 조율 필요</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_warning:
         df_war = pd.DataFrame(st.session_state.final_warning)
-        st.dataframe(df_war, use_container_width=True, hide_index=True)
+        event_war = st.dataframe(df_war, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
         
-        war_options = [f"{w['종목명']} ({w['종목코드']})" for w in st.session_state.final_warning]
-        selected_war = st.radio("⚠️ 조율 필요 종목 차트 선택", ["선택 안 함"] + war_options, key="war_radio")
-        if selected_war != "선택 안 함":
-            selected_code_to_chart = selected_war.split("(")[1].replace(")", "").strip()
-            selected_name_to_chart = selected_war.split(" ")[0].strip()
+        if event_war and event_war.get("selection") and event_war["selection"].get("rows"):
+            selected_row_idx = event_war["selection"]["rows"][0]
+            st.session_state.clicked_stock = st.session_state.final_warning[selected_row_idx]
 
+# 3. 관망 권장 표
 with col3:
     st.markdown("<h4 style='color:#4e342e; border-bottom:2px solid #4e342e; padding-bottom:5px;'>💤 관망 권장</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_info:
         df_inf = pd.DataFrame(st.session_state.final_info)
-        st.dataframe(df_inf, use_container_width=True, hide_index=True)
+        event_inf = st.dataframe(df_inf, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
         
-        inf_options = [f"{i['종목명']} ({i['종목코드']})" for i in st.session_state.final_info]
-        selected_inf = st.radio("💤 관망 권장 종목 차트 선택", ["선택 안 함"] + inf_options, key="inf_radio")
-        if selected_inf != "선택 안 함":
-            selected_code_to_chart = selected_inf.split("(")[1].replace(")", "").strip()
-            selected_name_to_chart = selected_inf.split(" ")[0].strip()
+        if event_inf and event_inf.get("selection") and event_inf["selection"].get("rows"):
+            selected_row_idx = event_inf["selection"]["rows"][0]
+            st.session_state.clicked_stock = st.session_state.final_info[selected_row_idx]
+
 
 # ==========================================
-# 🖥️ 하단 실시간 네이버 모바일 증권 차트 출력 전광판
+# 🖥️ 하단 실시간 네이버 금융 차트 동적 전광판
 # ==========================================
-if selected_code_to_chart:
+if st.session_state.clicked_stock:
     st.markdown("---")
-    st.markdown(f"### 📊 [{selected_name_to_chart} : {selected_code_to_chart}] 실시간 네이버 금융 차트 브리핑")
+    s_name = st.session_state.clicked_stock["종목명"]
+    s_code = st.session_state.clicked_stock["종목코드"]
     
-    # 네이버 공식 모바일 증권 차트 주소 연동 (모바일 버전이 프레임 내에서 훨씬 스포티하게 작동합니다)
-    naver_chart_url = f"https://m.stock.naver.com/domestic/stock/{selected_code_to_chart}/total"
+    st.markdown(f"### 📊 [{s_name} : {s_code}] 표 클릭 동적 연산 차트 브리핑")
     
-    # 샌드박스 보안 우회를 적용한 고해상도 Iframe 임베딩 기법
+    # 네이버 모바일 금융 상세 차트 대시보드 주소
+    naver_chart_url = f"https://m.stock.naver.com/domestic/stock/{s_code}/total"
+    
     chart_html = f"""
     <iframe 
         src="{naver_chart_url}" 
         width="100%" 
         height="750" 
-        style="border:2px solid #2e7d32; border-radius:12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" 
+        style="border:3px solid #2e7d32; border-radius:14px; box-shadow: 0 6px 12px rgba(0,0,0,0.15);" 
         allowfullscreen>
     </iframe>
     """
     st.components.v1.html(chart_html, height=770)
+else:
+    if st.session_state.run_analysis:
+        st.markdown("---")
+        st.info("💡 위의 세 가지 표 중에서 **아무 종목이나 줄(Row)을 툭 클릭**하시면 하단에 실시간 네이버 차트가 즉시 로드됩니다.")
