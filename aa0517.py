@@ -75,7 +75,6 @@ with ai_col1:
         with st.spinner("구글 인공지능 최신 표준 엔진(v1)으로 실시간 유망 종목을 추출하고 있습니다..."):
             st.session_state.api_error_msg = "" # 에러 초기화
             
-            # 💡 구글 공식 규격 주소와 모델 최신화 적용 완료
             url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
             headers = {'Content-Type': 'application/json'}
             prompt = (
@@ -83,9 +82,14 @@ with ai_col1:
                 "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
                 "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
             )
+            
+            # 💡 구글 v1 표준 규격(response_mime_type)으로 명칭 보정 완료
             data = {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"responseMimeType": "text/plain", "temperature": 0.2}
+                "generationConfig": {
+                    "response_mime_type": "text/plain", 
+                    "temperature": 0.2
+                }
             }
             
             try:
