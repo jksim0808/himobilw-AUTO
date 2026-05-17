@@ -6,10 +6,10 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (완결형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (최종형)", layout="wide")
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 공식 API 최신 프로토콜 탑재 + 지난번 3단계 복합 판단 로직 완전 결합")
+st.caption("구글 공식 API 최신 순정 프로토콜 탑재 + 지난번 3단계 복합 판단 로직")
 
 # ==========================================
 # 🔑 Gemini API 키 연동 (대표님 키 내장)
@@ -25,7 +25,7 @@ BACKUP_50_STOCKS = (
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
     "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
-    "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
+    "유한양행:000100, 알테오জেন:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
@@ -72,9 +72,10 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        with st.spinner("구글 인공지능 최신 표준 엔진(v1)으로 실시간 유망 종목을 추출하고 있습니다..."):
-            st.session_state.api_error_msg = "" # 에러 초기화
+        with st.spinner("구글 순정 엔진 버전으로 실시간 추천 종목을 받아오는 중입니다..."):
+            st.session_state.api_error_msg = "" 
             
+            # 💡 문제가 되는 구역의 부가 옵션들을 전부 걷어내고 완벽하게 정제된 순정 바디 구성
             url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
             headers = {'Content-Type': 'application/json'}
             prompt = (
@@ -82,21 +83,15 @@ with ai_col1:
                 "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
                 "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
             )
-            
-            # 💡 구글 v1 표준 규격(response_mime_type)으로 명칭 보정 완료
             data = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "response_mime_type": "text/plain", 
-                    "temperature": 0.2
-                }
+                "contents": [{"parts": [{"text": prompt}]}]
             }
             
             try:
                 response = requests.post(url, headers=headers, json=data, timeout=10)
                 if response.status_code == 200:
                     text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
-                    cleaned_result = text_result.strip().replace("\n", "").replace("`", "")
+                    cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
                     if len(cleaned_result) > 20:
                         st.session_state['raw_input_area'] = cleaned_result
                         st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
