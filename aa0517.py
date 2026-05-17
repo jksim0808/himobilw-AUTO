@@ -6,16 +6,15 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (마스터형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (차트 연동형)", layout="wide")
 
 # ==========================================
-# 🔑 [필수 수정] 여기에 새로 발급받으신 구글 API 키를 넣어주세요!
+# 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-# 💡 구글 AI 스튜디오(https://aistudio.google.com/)에서 새로 만든 키를 아래 따옴표 안에 붙여넣으시면 끝납니다.
 GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + API 키 보안 갱신 버전")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 실시간 네이버 증권 멀티 차트 시스템")
 
 # 백업용 마스터 리스트
 BACKUP_50_STOCKS = (
@@ -221,18 +220,68 @@ if st.button("🚀 지난번 로직 적용 전수 분석 시작", use_container_
         st.rerun()
 
 # ==========================================
-# 📊 세션 고정식 데이터 대시보드 출력 구역
+# 📊 세션 고정식 데이터 대시보드 및 실시간 차트 연동 구역
 # ==========================================
+selected_code_to_chart = None
+selected_name_to_chart = ""
+
 col1, col2, col3 = st.columns(3)
+
 with col1:
     st.markdown("<h4 style='color:#2e7d32; border-bottom:2px solid #2e7d32; padding-bottom:5px;'>📈 매수 긍정</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_success:
-        st.dataframe(pd.DataFrame(st.session_state.final_success), use_container_width=True, hide_index=True)
+        df_suc = pd.DataFrame(st.session_state.final_success)
+        st.dataframe(df_suc, use_container_width=True, hide_index=True)
+        
+        # 💡 지난번 연동 기능: 테이블 하단에서 즉시 선택 가능한 라디오 조율기
+        suc_options = [f"{s['종목명']} ({s['종목코드']})" for s in st.session_state.final_success]
+        selected_suc = st.radio("📈 매수 긍정 종목 차트 선택", ["선택 안 함"] + suc_options, key="suc_radio")
+        if selected_suc != "선택 안 함":
+            selected_code_to_chart = selected_suc.split("(")[1].replace(")", "").strip()
+            selected_name_to_chart = selected_suc.split(" ")[0].strip()
+
 with col2:
     st.markdown("<h4 style='color:#fbc02d; border-bottom:2px solid #fbc02d; padding-bottom:5px;'>⚠️ 진입 조율 필요</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_warning:
-        st.dataframe(pd.DataFrame(st.session_state.final_warning), use_container_width=True, hide_index=True)
+        df_war = pd.DataFrame(st.session_state.final_warning)
+        st.dataframe(df_war, use_container_width=True, hide_index=True)
+        
+        war_options = [f"{w['종목명']} ({w['종목코드']})" for w in st.session_state.final_warning]
+        selected_war = st.radio("⚠️ 조율 필요 종목 차트 선택", ["선택 안 함"] + war_options, key="war_radio")
+        if selected_war != "선택 안 함":
+            selected_code_to_chart = selected_war.split("(")[1].replace(")", "").strip()
+            selected_name_to_chart = selected_war.split(" ")[0].strip()
+
 with col3:
     st.markdown("<h4 style='color:#4e342e; border-bottom:2px solid #4e342e; padding-bottom:5px;'>💤 관망 권장</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_info:
-        st.dataframe(pd.DataFrame(st.session_state.final_info), use_container_width=True, hide_index=True)
+        df_inf = pd.DataFrame(st.session_state.final_info)
+        st.dataframe(df_inf, use_container_width=True, hide_index=True)
+        
+        inf_options = [f"{i['종목명']} ({i['종목코드']})" for i in st.session_state.final_info]
+        selected_inf = st.radio("💤 관망 권장 종목 차트 선택", ["선택 안 함"] + inf_options, key="inf_radio")
+        if selected_inf != "선택 안 함":
+            selected_code_to_chart = selected_inf.split("(")[1].replace(")", "").strip()
+            selected_name_to_chart = selected_inf.split(" ")[0].strip()
+
+# ==========================================
+# 🖥️ 하단 실시간 네이버 모바일 증권 차트 출력 전광판
+# ==========================================
+if selected_code_to_chart:
+    st.markdown("---")
+    st.markdown(f"### 📊 [{selected_name_to_chart} : {selected_code_to_chart}] 실시간 네이버 금융 차트 브리핑")
+    
+    # 네이버 공식 모바일 증권 차트 주소 연동 (모바일 버전이 프레임 내에서 훨씬 스포티하게 작동합니다)
+    naver_chart_url = f"https://m.stock.naver.com/domestic/stock/{selected_code_to_chart}/total"
+    
+    # 샌드박스 보안 우회를 적용한 고해상도 Iframe 임베딩 기법
+    chart_html = f"""
+    <iframe 
+        src="{naver_chart_url}" 
+        width="100%" 
+        height="750" 
+        style="border:2px solid #2e7d32; border-radius:12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" 
+        allowfullscreen>
+    </iframe>
+    """
+    st.components.v1.html(chart_html, height=770)
