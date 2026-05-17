@@ -6,7 +6,7 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (완벽 차트 버전)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결본)", layout="wide")
 
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
@@ -14,7 +14,7 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (완벽 차트 �
 GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 국장 고유 시장 DB 100% 연동")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 트레이딩뷰 최신 규격 엔진 엔진")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -24,17 +24,11 @@ BACKUP_50_STOCKS = (
     "HD현대인프라코어:042670, 한국항공우주:047810, 한화에어로스페이스:012450, LIG넥스원:079550, 두산로보틱스:454910, "
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
-    "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
+    "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, celltrion:068270, "
     "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
-
-# 🏛️ [완벽 해결] 트레이딩뷰 튕김 방지용 국내 주요 종목 시장 정밀 매핑 DB
-KOSDAQ_BOARD_SET = {
-    "058470", "39030", "039030", "403870", "454840", "394280", "445090", "036930",
-    "277810", "348340", "247540", "066970", "196170", "141080", "298380", "145020", "086900"
-}
 
 # 세션 상태 초기화
 if 'raw_input_area' not in st.session_state:
@@ -169,8 +163,7 @@ if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_c
             progress_bar.progress((idx + 1) / total)
             
             try:
-                # 야후 파이낸스용 티커 분기 (코드는 마스터셋 및 끝자리 병행 판별)
-                if code in KOSDAQ_BOARD_SET or (int(code) % 10 != 0):
+                if int(code) % 10 != 0:
                     ticker = f"{code}.KQ"
                 else:
                     ticker = f"{code}.KS"
@@ -267,7 +260,7 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ [완벽 해결] 하단 실시간 트레이딩뷰 차트 위젯 구역 (강제 리셋 원천 차단)
+# 🖥️ [원인 격파] 하단 실시간 트레이딩뷰 차트 위젯 구역 (최신 단일 규격 매핑)
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
@@ -276,22 +269,9 @@ if st.session_state.clicked_stock:
     
     st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 기술적 분석 대시보드 차트")
     
-    # 💡 [핵심 교체] 완벽한 하드코딩 매핑 테이블 및 교차 검증을 통해 트레이딩뷰 전용 접두사 결정
-    if s_code in KOSDAQ_BOARD_SET:
-        tradingview_symbol = f"KOSDAQ:{s_code}"
-    else:
-        # 코스닥 종목 중 예외 케이스 및 일반 자릿수 판별 방어책
-        if s_name in ["리노공업", "HPSP", "가온칩스", "오픈에지테크놀로지", "에이직랜드", "에코프로비엠", "엘앤에프", "알테오젠", "리그켐바이오", "에이비엘바이오", "휴젤", "메디톡스"]:
-            tradingview_symbol = f"KOSDAQ:{s_code}"
-        else:
-            try:
-                # 끝자리가 0이 아니면 코스닥 시장으로 정밀 분기
-                if int(s_code) % 10 != 0:
-                    tradingview_symbol = f"KOSDAQ:{s_code}"
-                else:
-                    tradingview_symbol = f"KRX:{s_code}"
-            except:
-                tradingview_symbol = f"KRX:{s_code}"
+    # 💡 [트레이딩뷰 최신 업데이트 반영] 
+    # 코스피/코스닥 구분 없이 한국 시장은 무조건 대문자 'KRX:코드'로 통합 주입해야 작동합니다.
+    tradingview_symbol = f"KRX:{s_code}"
     
     tradingview_html = f"""
     <div class="tradingview-widget-container" style="height:600px; width:100%;">
