@@ -6,7 +6,7 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (필터 개방형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (종합 완결본)", layout="wide")
 
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
@@ -14,7 +14,7 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (필터 개방�
 GEMINI_API_KEY = "AIzaSyDpOenIZEWKgsIsnOKZp-dnWJTsZ_WP8J8"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 정배열 전면 개방 시스템")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 실시간 내부 차트 엔진 탑재")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -25,7 +25,7 @@ BACKUP_50_STOCKS = (
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
     "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
-    "유한양행:000100, 알테오জেন:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
+    "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
@@ -47,7 +47,7 @@ if 'clicked_stock' not in st.session_state:
     st.session_state.clicked_stock = None
 
 # ==========================================
-# 📊 [필터가 대폭 완화된] 복합 로직 대시보드 브리핑
+# 📊 복합 로직 대시보드 브리핑
 # ==========================================
 st.markdown("### 🔓 필터가 완화된 3단계 복합 판단 로직")
 lead_col1, lead_col2, lead_col3 = st.columns(3)
@@ -203,8 +203,7 @@ if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_c
                         "RSI": rsi_val, "이격도(20일)": f"{disparity_20:.1f}%"
                     }
                     
-                    # 🛡️ [맹점 보완 최소화 부위]
-                    # 이격도 115%까지 대폭 확장, 위꼬리 방어 해제, RSI 85까지 허용, 거래량 수치 30% 조건 완화
+                    # 🛡️ 정배열이기만 하면 대부분 1단계로 진입하도록 장벽 해제
                     if (curr_close > ma20 > ma60) and (disparity_20 <= 115.0) and (35 <= rsi_val <= 85) and (vol_ratio >= 0.3):
                         suc_temp.append(stock_info)
                     elif (curr_close > ma20 > ma60):
@@ -261,21 +260,42 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ 하단 실시간 네이버 금융 차트 동적 전광판
+# 🖥️ [해결책 적용] 하단 실시간 트레이딩뷰 차트 위젯 구역
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
     s_name = st.session_state.clicked_stock["종목명"]
     s_code = st.session_state.clicked_stock["종목코드"]
     
-    st.markdown(f"### 📊 [{s_name} : {s_code}] 필터링 정밀 차트 검증")
+    st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 기술적 분석 대시보드 차트")
     
-    naver_chart_url = f"https://m.stock.naver.com/domestic/stock/{s_code}/total"
-    chart_html = f"""
-    <iframe src="{naver_chart_url}" width="100%" height="750" style="border:3px solid #2e7d32; border-radius:14px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);" allowfullscreen></iframe>
+    # 한국 주식 시장 연동을 위한 티커 포맷팅 (예: KRX:005930)
+    tradingview_symbol = f"KRX:{s_code}"
+    
+    tradingview_html = f"""
+    <div class="tradingview-widget-container" style="height:600px; width:100%;">
+      <div id="tradingview_chart_frame" style="height:100%;"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+      <script type="text/javascript">
+      new TradingView.widget({{
+        "autosize": true,
+        "symbol": "{tradingview_symbol}",
+        "interval": "D",
+        "timezone": "Asia/Seoul",
+        "theme": "light",
+        "style": "1",
+        "locale": "ko",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_side_toolbar": false,
+        "allow_symbol_change": false,
+        "container_id": "tradingview_chart_frame"
+      }});
+      </script>
+    </div>
     """
-    st.components.v1.html(chart_html, height=770)
+    st.components.v1.html(tradingview_html, height=620)
 else:
     if st.session_state.run_analysis:
         st.markdown("---")
-        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 하단에 실시간 종합 금융 차트가 다이렉트로 펼쳐집니다.")
+        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 하단에 해당 종목의 실시간 캔들 차트 전광판이 에러 없이 즉시 펼쳐집니다.")
