@@ -9,7 +9,7 @@ import re
 st.set_page_config(page_title="하이모바일 주식 매니저 (마스터형)", layout="wide")
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 3단계 복합 판단 로직")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 타임아웃 방어벽 확장 버전")
 
 # ==========================================
 # 🔑 Gemini API 키 연동 (대표님 키 내장)
@@ -25,7 +25,7 @@ BACKUP_50_STOCKS = (
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
     "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
-    "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
+    "유한양행:000100, 알테오জেন:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
@@ -72,23 +72,23 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        with st.spinner("구글 v1 최신 검증 모델(Gemini 2.5)로 종목을 추출 중입니다..."):
+        with st.spinner("구글 최신 엔진이 종목을 연산 중입니다. 최대 30초가 소요될 수 있습니다..."):
             st.session_state.api_error_msg = "" 
             
-            # 💡 구글 표준 v1 주소와 100% 검증 완료된 최신 gemini-2.5-flash 모델 매칭
             url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
             headers = {'Content-Type': 'application/json'}
             prompt = (
                 "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
                 "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
-                "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
+                "각 종목들은 쉼표(,)로만 연결해서 단 한 줄 of 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
             )
             data = {
                 "contents": [{"parts": [{"text": prompt}]}]
             }
             
             try:
-                response = requests.post(url, headers=headers, json=data, timeout=10)
+                # 💡 timeout을 30초로 넉넉하게 확장하여 구글 서버 연산 지연을 방어합니다.
+                response = requests.post(url, headers=headers, json=data, timeout=30)
                 if response.status_code == 200:
                     text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
                     cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
