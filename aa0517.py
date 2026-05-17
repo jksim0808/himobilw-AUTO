@@ -215,4 +215,8 @@ with col2:
         st.caption("분석 시작 버튼을 누르면 조건 만족 종목이 출력됩니다.")
 
 with col3:
-    st.markdown("<h4 style='color:#4e342e; border-bottom:2px solid #4e342e; padding-bottom:5
+    st.markdown("<h4 style='color:#4e342e; border-bottom:2px solid #4e342e; padding-bottom:5px;'>💤 관망 권장</h4>", unsafe_allow_html=True)
+    if st.session_state.run_analysis and st.session_state.final_info:
+        st.dataframe(pd.DataFrame(st.session_state.final_info), use_container_width=True, hide_index=True)
+    else:
+        st.caption("분석 시작 버튼을 누르면 조건 만족 종목이 출력됩니다.")
