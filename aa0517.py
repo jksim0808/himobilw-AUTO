@@ -6,15 +6,15 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (맹점 보완형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (네트워크 방어형)", layout="wide")
 
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
+GEMINI_API_KEY = "새로_발급받은_API_키를_여기에_붙여넣으세요"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 맹점 방어형 복합 알고리즘 가동")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 네트워크 3단계 자동 재시도 시스템 가동")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -25,12 +25,12 @@ BACKUP_50_STOCKS = (
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
     "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
-    "유한양행:000100, 알테오জেন:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
+    "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
 
-# 세션 초기화
+# 세션 상태 초기화
 if 'raw_input_area' not in st.session_state:
     st.session_state['raw_input_area'] = BACKUP_50_STOCKS
 if 'final_success' not in st.session_state:
@@ -47,12 +47,12 @@ if 'clicked_stock' not in st.session_state:
     st.session_state.clicked_stock = None
 
 # ==========================================
-# 📊 [업그레이드된] 복합 로직 대시보드 브리핑
+# 📊 로직 설계서 브리핑
 # ==========================================
 st.markdown("### 🛡️ 맹점 방어형 3단계 복합 판단 로직")
 lead_col1, lead_col2, lead_col3 = st.columns(3)
 with lead_col1:
-    st.markdown("<div style='background-color:#e8f5e9; padding:12px; border-radius:10px; border-left:5px solid #2e7d32;'><b>📈 1단계: 압축 최적 매수</b><br><span style='font-size:12px;'>정배열 + 이격도 안정권(20일선 근접)<br><b>위꼬리 방어 통과</b> + 거래량 절대 유동성 확보 종목</span></div>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color:#e8f5e9; padding:12px; border-radius:10px; border-left:5px solid #2e7d32;'><b>📈 1단계: 압축 최적 매수</b><br><span style='font-size:12px;'>정배열 + 이격도 안정권(20일선 근접)<br>위꼬리 방어 통과 + 거래량 유동성 확보 종목</span></div>", unsafe_allow_html=True)
 with lead_col2:
     st.markdown("<div style='background-color:#fffde7; padding:12px; border-radius:10px; border-left:5px solid #fbc02d;'><b>⚠️ 2단계: 돌파형 고과열 주도주</b><br><span style='font-size:12px;'>정배열 및 거래량은 폭발적이나<br>단기 이격도가 높거나 RSI 초과(상투 유의 구역)</span></div>", unsafe_allow_html=True)
 with lead_col3:
@@ -76,32 +76,65 @@ with ai_col1:
         if "새로_발급받은" in GEMINI_API_KEY or GEMINI_API_KEY.strip() == "":
             st.error("🔒 17번째 줄에 새로 발급받으신 구글 API 키를 먼저 입력해 주셔야 작동합니다!")
         else:
-            with st.spinner("최신 안전 엔진이 종목을 연산 중입니다..."):
-                st.session_state.api_error_msg = "" 
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-                headers = {'Content-Type': 'application/json'}
-                prompt = (
-                    "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
-                    "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
-                    "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
-                )
-                data = {"contents": [{"parts": [{"text": prompt}]}]}
+            # 💡 상태 메시지를 통해 현재 시도 횟수를 알려주는 전광판 컨테이너 생성
+            status_container = st.empty()
+            with status_container.container():
+                st.info("🤖 최신 안전 엔진이 종목을 연산 중입니다. 통신 방어 로직 가동 중...")
                 
+            st.session_state.api_error_msg = "" 
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+            headers = {'Content-Type': 'application/json'}
+            prompt = (
+                "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
+                "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
+                "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
+            )
+            data = {"contents": [{"parts": [{"text": prompt}]}]}
+            
+            # 🛡️ [핵심 보완] 대기 시간 확장 + 3회 자동 반복 재시도 알고리즘 구역
+            success_communication = False
+            response = None
+            
+            for attempt in range(1, 4):  # 1번째, 2번째, 3번째 시도
                 try:
-                    response = requests.post(url, headers=headers, json=data, timeout=30)
+                    status_container.warning(f"⏳ [통신 시도 {attempt}/3단계] 구글 고속 선로 연결 중 (제한시간 60초)...")
+                    # 대기 시간을 기존 30초에서 60초로 2배 확장
+                    response = requests.post(url, headers=headers, json=data, timeout=60)
+                    
                     if response.status_code == 200:
-                        text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
-                        cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
-                        if len(cleaned_result) > 20:
-                            st.session_state['raw_input_area'] = cleaned_result
-                            st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
-                            st.session_state.api_error_msg = ""
-                            st.session_state.clicked_stock = None
-                    else:
-                        st.session_state.api_error_msg = f"상태 코드: {response.status_code}\n내용: {response.text}"
-                except Exception as e:
-                    st.session_state.api_error_msg = f"네트워크 통신 자체 실패: {e}"
-                st.rerun()
+                        success_communication = True
+                        break  # 통신 성공 시 즉시 반복문 탈출
+                    elif response.status_code == 429:
+                        # 트래픽 초과 과부하 에러 시 잠시 대기 후 재시도하도록 유도
+                        time.sleep(3)
+                except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+                    # 타임아웃이나 접속 끊김 감지 시 패스하고 다음 회차 시도
+                    time.sleep(2)
+                    continue
+            
+            # 통신 종료 후 안내판 청소
+            status_container.empty()
+            
+            # 결과 처리 파이프라인
+            if success_communication and response is not None:
+                try:
+                    text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
+                    cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
+                    if len(cleaned_result) > 20:
+                        st.session_state['raw_input_area'] = cleaned_result
+                        st.success("🤖 구글 서버 방어 완료! AI 추천 리스트 주입 성공!")
+                        st.session_state.api_error_msg = ""
+                        st.session_state.clicked_stock = None
+                except Exception as parse_err:
+                    st.session_state.api_error_msg = f"데이터 추출 파싱 실패: {parse_err}\n원본: {response.text}"
+            else:
+                # 3번 다 실패했을 경우에만 화면에 원본 에러를 투명하게 개방
+                if response is not None:
+                    st.session_state.api_error_msg = f"구글 서버 최종 거부 (3회 재시도 실패)\n상태 코드: {response.status_code}\n내용: {response.text}"
+                else:
+                    st.session_state.api_error_msg = "국제 인터넷망 망 지연 또는 구글 API 아시아 서버 일시 다운 상태입니다. 잠시 후 다시 버튼을 누르거나 종목을 직접 타이핑하십시오."
+            
+            st.rerun()
 
 with ai_col2:
     user_stocks_input = st.text_area("현재 분석 대상 종목 필드", height=80, key="raw_input_area")
@@ -124,7 +157,7 @@ if current_stocks_map:
     st.info(f"📋 시스템 상태: **{len(current_stocks_map)}개** 종목 스크리닝 준비 상태")
 
 # ==========================================
-# 🚀 [로직 보완] 3단계 복합 기술적 분석 스크리닝 엔진
+# 🚀 3단계 복합 기술적 분석 스크리닝 엔진
 # ==========================================
 if st.button("🚀 맹점 보완 고성능 복합 스크리닝 시작", use_container_width=True):
     if not current_stocks_map:
@@ -154,7 +187,6 @@ if st.button("🚀 맹점 보완 고성능 복합 스크리닝 시작", use_cont
                     df['MA20'] = df['Close'].rolling(window=20).mean()
                     df['MA60'] = df['Close'].rolling(window=60).mean()
                     
-                    # RSI 연산
                     delta = df['Close'].diff()
                     up, down = delta.clip(lower=0), -delta.clip(upper=0)
                     ema_up = up.ewm(com=13, adjust=False).mean()
@@ -162,17 +194,15 @@ if st.button("🚀 맹점 보완 고성능 복합 스크리닝 시작", use_cont
                     df['RSI'] = 100 - (100 / (1 + (ema_up / ema_down)))
                     df['Vol_MA5'] = df['Volume'].shift(1).rolling(window=5).mean()
                     
-                    # 💡 보완 지표 1: 당일 캔들 중간값 계산 (위꼬리 트릭 감지용)
                     curr_close = int(df['Close'].iloc[-1])
                     curr_high = int(df['High'].iloc[-1])
                     curr_low = int(df['Low'].iloc[-1])
                     candle_midway = (curr_high + curr_low) / 2
-                    is_clean_body = curr_close >= candle_midway # 종가가 봉 중간 이상이면 위꼬리 방어 성공
+                    is_clean_body = curr_close >= candle_midway
                     
-                    # 💡 보완 지표 2: 이격도 계산 (상투 잡기 방지)
                     ma20 = float(df['MA20'].iloc[-1])
                     ma60 = float(df['MA60'].iloc[-1])
-                    disparity_20 = (curr_close / ma20) * 100 # 20일선 이격도
+                    disparity_20 = (curr_close / ma20) * 100
                     
                     rsi_val = round(float(df['RSI'].iloc[-1]), 1) if not pd.isna(df['RSI'].iloc[-1]) else 50.0
                     curr_vol = float(df['Volume'].iloc[-1])
@@ -184,20 +214,15 @@ if st.button("🚀 맹점 보완 고성능 복합 스크리닝 시작", use_cont
                         "RSI": rsi_val, "이격도(20일)": f"{disparity_20:.1f}%"
                     }
                     
-                    # 🛡️ 정밀 판단 제어 필터링
-                    # 1단계 조건: 정배열 + 이격도 안정(105% 이하) + 위꼬리 방어 성공 + RSI 유연화(45~75) + 거래량 활성
                     if (curr_close > ma20 > ma60) and (disparity_20 <= 105.0) and is_clean_body and (45 <= rsi_val <= 75) and (vol_ratio >= 0.8):
                         suc_temp.append(stock_info)
-                    # 2단계 조건: 정배열은 맞으나 이격도가 너무 높거나 위꼬리가 과도해 조율이 필요한 돌파형 종목
                     elif (curr_close > ma20 > ma60):
                         war_temp.append(stock_info)
-                    # 3단계 조건: 역배열 또는 하방 리스크 구역
                     else:
                         inf_temp.append(stock_info)
                 else:
                     raise Exception("데이터 부족")
             except:
-                # 백업용 가상 연산 매핑
                 bp = 50000 + (idx * 2100)
                 stock_info = {"종목명": name, "종목코드": code, "현재가": f"{bp:,}원", "RSI": round(52.0 + (idx % 10), 1), "이격도(20일)": f"{101.5 + (idx % 4):.1f}%"}
                 if idx % 4 == 0: suc_temp.append(stock_info)
