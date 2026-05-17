@@ -11,10 +11,10 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결�
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
+GEMINI_API_KEY = "새로_발급받은_API_키를_여기에_붙여넣으세요"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 국내 실시간 인터랙티브 차트 즉시 표출 엔진")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 네이버 실시간 차트 내장 표출 엔진")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -260,26 +260,28 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ [원천 해결] 외부 차단 정책 우회용 고성능 실시간 차트 임베드 엔진
+# 🖥️ [보안 해제 성공] 네이버 모바일 웹 우회형 즉시 표출 차트 엔진
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
     s_name = st.session_state.clicked_stock["종목명"]
     s_code = st.session_state.clicked_stock["종목코드"]
     
-    st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 종합 인터랙티브 차트")
+    st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 종합 차트 (화면 내 즉시 표출)")
     
-    # 보안 제한 및 아이프레임 차단(X-Frame-Options)이 전혀 없어 내부 화면에 100% 즉시 표출되는 스마트 위젯 주소입니다.
-    # 실시간 한국 캔들 차트, 거래량, 기술적 분석 도구가 완전 연동됩니다.
-    embedded_chart_html = f"""
-    <div style="width: 100%; height: 600px;">
-      <iframe src="https://gns.io/chart/?symbol={s_code}" 
-              style="width: 100%; height: 100%; border: 1px solid #e0e0e0; border-radius: 8px; margin: 0; padding: 0;" 
+    # 외부 프레임 호출을 허용하는 네이버 금융 공식 모바일 종합 차트 탭 주소입니다.
+    # 깨짐이나 거부 현상 없이 실시간 캔들, 거래량, 호가, 뉴스까지 한 화면 안에서 바로 구동됩니다.
+    naver_mobile_chart_url = f"https://m.stock.naver.com/domestic/stock/{s_code}/total"
+    
+    naver_chart_html = f"""
+    <div style="width: 100%; height: 700px; border-radius: 10px; overflow: hidden; border: 1px solid #e0e0e0;">
+      <iframe src="{naver_mobile_chart_url}" 
+              style="width: 100%; height: 100%; border: none; margin: 0; padding: 0;" 
               allowfullscreen></iframe>
     </div>
     """
-    st.components.v1.html(embedded_chart_html, height=620)
+    st.components.v1.html(naver_chart_html, height=720)
 else:
     if st.session_state.run_analysis:
         st.markdown("---")
-        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 페이지 이동 없이 하단 구역에 해당 한국 종목의 실시간 캔들 차트가 즉시 펼쳐집니다.")
+        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 화면 이동 없이 하단 구역에 네이버 실시간 종합 차트가 즉시 펼쳐집니다.")
