@@ -53,7 +53,7 @@ def get_gemini_recommended_stocks():
 
 # 세션 메모리 기틀 마련
 if 'raw_input_area' not in st.session_state:
-    st.session_state['raw_input_area'] = BACKUP_50_STOCKS
+    st.session_state['raw_input_area'] =""
 if 'final_success' not in st.session_state:
     st.session_state.final_success = []
 if 'final_warning' not in st.session_state:
