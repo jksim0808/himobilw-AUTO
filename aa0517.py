@@ -8,13 +8,14 @@ import re
 
 st.set_page_config(page_title="하이모바일 주식 매니저 (마스터형)", layout="wide")
 
-st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 타임아웃 방어벽 확장 버전")
+# ==========================================
+# 🔑 [필수 수정] 여기에 새로 발급받으신 구글 API 키를 넣어주세요!
+# ==========================================
+# 💡 구글 AI 스튜디오(https://aistudio.google.com/)에서 새로 만든 키를 아래 따옴표 안에 붙여넣으시면 끝납니다.
+GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
-# ==========================================
-# 🔑 Gemini API 키 연동 (대표님 키 내장)
-# ==========================================
-GEMINI_API_KEY = "AIzaSyDpzmFAs_J3QqPmT7psnqk3CJYF2PcP8yg"  
+st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + API 키 보안 갱신 버전")
 
 # 백업용 마스터 리스트
 BACKUP_50_STOCKS = (
@@ -72,36 +73,38 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        with st.spinner("구글 최신 엔진이 종목을 연산 중입니다. 최대 30초가 소요될 수 있습니다..."):
-            st.session_state.api_error_msg = "" 
-            
-            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-            headers = {'Content-Type': 'application/json'}
-            prompt = (
-                "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
-                "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
-                "각 종목들은 쉼표(,)로만 연결해서 단 한 줄 of 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
-            )
-            data = {
-                "contents": [{"parts": [{"text": prompt}]}]
-            }
-            
-            try:
-                # 💡 timeout을 30초로 넉넉하게 확장하여 구글 서버 연산 지연을 방어합니다.
-                response = requests.post(url, headers=headers, json=data, timeout=30)
-                if response.status_code == 200:
-                    text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
-                    cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
-                    if len(cleaned_result) > 20:
-                        st.session_state['raw_input_area'] = cleaned_result
-                        st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
-                        st.session_state.api_error_msg = ""
-                else:
-                    st.session_state.api_error_msg = f"상태 코드: {response.status_code}\n내용: {response.text}"
-            except Exception as e:
-                st.session_state.api_error_msg = f"네트워크 통신 자체 실패: {e}"
+        if "새로_발급받은" in GEMINI_API_KEY or GEMINI_API_KEY.strip() == "":
+            st.error("🔒 17번째 줄에 새로 발급받으신 구글 API 키를 먼저 입력해 주셔야 작동합니다!")
+        else:
+            with st.spinner("최신 안전 엔진이 종목을 연산 중입니다. 최대 30초가 소요될 수 있습니다..."):
+                st.session_state.api_error_msg = "" 
                 
-            st.rerun()
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+                headers = {'Content-Type': 'application/json'}
+                prompt = (
+                    "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
+                    "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
+                    "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
+                )
+                data = {
+                    "contents": [{"parts": [{"text": prompt}]}]
+                }
+                
+                try:
+                    response = requests.post(url, headers=headers, json=data, timeout=30)
+                    if response.status_code == 200:
+                        text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
+                        cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
+                        if len(cleaned_result) > 20:
+                            st.session_state['raw_input_area'] = cleaned_result
+                            st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
+                            st.session_state.api_error_msg = ""
+                    else:
+                        st.session_state.api_error_msg = f"상태 코드: {response.status_code}\n내용: {response.text}"
+                except Exception as e:
+                    st.session_state.api_error_msg = f"네트워크 통신 자체 실패: {e}"
+                    
+                st.rerun()
 
 with ai_col2:
     user_stocks_input = st.text_area(
