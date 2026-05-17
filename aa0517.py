@@ -14,7 +14,7 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결�
 GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 트레이딩뷰 최신 규격 엔진 엔진")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 2026 최신형 차트 엔진 탑재")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -24,7 +24,7 @@ BACKUP_50_STOCKS = (
     "HD현대인프라코어:042670, 한국항공우주:047810, 한화에어로스페이스:012450, LIG넥스원:079550, 두산로보틱스:454910, "
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
-    "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, celltrion:068270, "
+    "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
     "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
@@ -260,7 +260,7 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ [원인 격파] 하단 실시간 트레이딩뷰 차트 위젯 구역 (최신 단일 규격 매핑)
+# 🖥️ [100% 원천 해결] 신형 고성능 트레이딩뷰 실시간 차트 임베드 엔진
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
@@ -269,30 +269,13 @@ if st.session_state.clicked_stock:
     
     st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 기술적 분석 대시보드 차트")
     
-    # 💡 [트레이딩뷰 최신 업데이트 반영] 
-    # 코스피/코스닥 구분 없이 한국 시장은 무조건 대문자 'KRX:코드'로 통합 주입해야 작동합니다.
-    tradingview_symbol = f"KRX:{s_code}"
-    
+    # 💡 [핵심 격파 점검] 구형 자바스크립트 호출을 전부 걷어내고, 
+    # 트레이딩뷰 최신 표준 웹 컴포넌트 규격(widget-container)을 인라인 데이터 스트링으로 직주입합니다.
     tradingview_html = f"""
-    <div class="tradingview-widget-container" style="height:600px; width:100%;">
-      <div id="tradingview_chart_frame" style="height:100%;"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-      <script type="text/javascript">
-      new TradingView.widget({{
-        "autosize": true,
-        "symbol": "{tradingview_symbol}",
-        "interval": "D",
-        "timezone": "Asia/Seoul",
-        "theme": "light",
-        "style": "1",
-        "locale": "ko",
-        "toolbar_bg": "#f1f3f6",
-        "enable_publishing": false,
-        "hide_side_toolbar": false,
-        "allow_symbol_change": true,
-        "container_id": "tradingview_chart_frame"
-      }});
-      </script>
+    <div class="tradingview-widget-container" style="width: 100%; height: 600px;">
+      <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=KRX%3A{s_code}&interval=D&symboledit=0&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=light&style=1&timezone=Asia%2FSeoul&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=ko&utm_source=localhost&utm_medium=widget&utm_campaign=chart&utm_term=KRX%3A{s_code}" 
+              style="width: 100%; height: 100%; border: none; margin: 0; padding: 0;" 
+              allowfullscreen></iframe>
     </div>
     """
     st.components.v1.html(tradingview_html, height=620)
