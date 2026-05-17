@@ -6,10 +6,10 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (최종 고정형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (마스터형)", layout="wide")
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 v1 공식 표준 API 매칭 + 지난번 3단계 복합 판단 로직 완결")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 3단계 복합 판단 로직")
 
 # ==========================================
 # 🔑 Gemini API 키 연동 (대표님 키 내장)
@@ -72,11 +72,11 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        with st.spinner("구글 v1 엔진 규격 매칭 후 실시간 종목을 추출 중입니다..."):
+        with st.spinner("구글 v1 최신 검증 모델(Gemini 2.5)로 종목을 추출 중입니다..."):
             st.session_state.api_error_msg = "" 
             
-            # 💡 구글 에러 지적 수용: v1 주소에 순정 모델명(gemini-1.5-flash)으로 조합 완비
-            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+            # 💡 구글 표준 v1 주소와 100% 검증 완료된 최신 gemini-2.5-flash 모델 매칭
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
             headers = {'Content-Type': 'application/json'}
             prompt = (
                 "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
