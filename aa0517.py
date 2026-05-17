@@ -6,15 +6,15 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (최종 통합본)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (필터 개방형)", layout="wide")
 
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-GEMINI_API_KEY = "AIzaSyDpOenIZEWKgsIsnOKZp-dnWJTsZ_WP8J8"  
+GEMINI_API_KEY = "새로_발급받은_API_키를_여기에_붙여넣으세요"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 공격형 확장 필터링 시스템")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 정배열 전면 개방 시스템")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -25,7 +25,7 @@ BACKUP_50_STOCKS = (
     "레인보우로보틱스:277810, 뉴로메카:348340, LG에너지솔루션:373220, 삼성SDI:006400, 포스코퓨처엠:003670, "
     "에코프로비엠:247540, 엘앤에프:066970, HD현대일렉트릭:043200, 효성중공업:298040, LS일렉트릭:010120, "
     "두산에너빌리티:034020, 한화솔루션:009830, 씨에스윈드:112610, 삼성바이오로직스:207940, 셀트리온:068270, "
-    "유한양행:000100, 알테오젠:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
+    "유한양행:000100, 알테오জেন:196170, 리그켐바이오:141080, 에이비엘바이오:298380, 휴젤:145020, "
     "메디톡스:086900, 한미약품:128940, SK바이오팜:326030, KB금융:105560, 신한지주:055550, "
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
@@ -47,16 +47,16 @@ if 'clicked_stock' not in st.session_state:
     st.session_state.clicked_stock = None
 
 # ==========================================
-# 📊 [조율 완화된] 복합 로직 대시보드 브리핑
+# 📊 [필터가 대폭 완화된] 복합 로직 대시보드 브리핑
 # ==========================================
-st.markdown("### 🛡️ 유연화된 3단계 복합 판단 로직")
+st.markdown("### 🔓 필터가 완화된 3단계 복합 판단 로직")
 lead_col1, lead_col2, lead_col3 = st.columns(3)
 with lead_col1:
-    st.markdown("<div style='background-color:#e8f5e9; padding:12px; border-radius:10px; border-left:5px solid #2e7d32;'><b>📈 1단계: 압축 최적 매수 (확장)</b><br><span style='font-size:12px;'>정배열 + <b>이격도 110% 이하 확대</b><br>위꼬리 방어 통과 + <b>RSI ~78 확장</b> + 거래량 60%↑</span></div>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color:#e8f5e9; padding:12px; border-radius:10px; border-left:5px solid #2e7d32;'><b>📈 1단계: 압축 최적 매수 (전면 개방)</b><br><span style='font-size:12px;'>정배열 상태라면 대부분 포착<br><b>이격도 115%까지 전면 확대 / RSI 85까지 초과열 허용</b></span></div>", unsafe_allow_html=True)
 with lead_col2:
-    st.markdown("<div style='background-color:#fffde7; padding:12px; border-radius:10px; border-left:5px solid #fbc02d;'><b>⚠️ 2단계: 고과열 돌파형 주도주</b><br><span style='font-size:12px;'>정배열 및 추세는 매우 강력하나<br>단기 이격도가 110%를 초과한 초고공 비행 구역</span></div>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color:#fffde7; padding:12px; border-radius:10px; border-left:5px solid #fbc02d;'><b>⚠️ 2단계: 초고공 급등 주도주</b><br><span style='font-size:12px;'>정배열 및 추세가 멈추지 않고 폭발하여<br>단기 이격도가 115%마저 초과해 버린 상투 위험 구역</span></div>", unsafe_allow_html=True)
 with lead_col3:
-    st.markdown("<div style='background-color:#efebe9; padding:12px; border-radius:10px; border-left:5px solid #4e342e;'><b>💤 3단계: 추세 관망</b><br><span style='font-size:12px;'>역배열 상태이거나 위꼬리가 길어<br>단기 매도 폭탄을 맞은 리스크 구역</span></div>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color:#efebe9; padding:12px; border-radius:10px; border-left:5px solid #4e342e;'><b>💤 3단계: 추세 관망</b><br><span style='font-size:12px;'>역배열 상태이거나 단기 하방 추세가 진행 중인 관망 구역</span></div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -151,9 +151,9 @@ if current_stocks_map:
     st.info(f"📋 시스템 상태: **{len(current_stocks_map)}개** 종목 실시간 연동 완료")
 
 # ==========================================
-# 🚀 3단계 복합 기술적 분석 스크리닝 엔진 (수치 완화 튜닝 적용)
+# 🚀 3단계 복합 기술적 분석 스크리닝 엔진 (맹점 필터 최소화 튜닝 적용)
 # ==========================================
-if st.button("🚀 맹점 완화형 고성능 복합 스크리닝 시작", use_container_width=True):
+if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_container_width=True):
     if not current_stocks_map:
         st.error("오류: 현재 파싱된 종목이 전혀 없습니다.")
     else:
@@ -189,11 +189,6 @@ if st.button("🚀 맹점 완화형 고성능 복합 스크리닝 시작", use_c
                     df['Vol_MA5'] = df['Volume'].shift(1).rolling(window=5).mean()
                     
                     curr_close = int(df['Close'].iloc[-1])
-                    curr_high = int(df['High'].iloc[-1])
-                    curr_low = int(df['Low'].iloc[-1])
-                    candle_midway = (curr_high + curr_low) / 2
-                    is_clean_body = curr_close >= candle_midway
-                    
                     ma20 = float(df['MA20'].iloc[-1])
                     ma60 = float(df['MA60'].iloc[-1])
                     disparity_20 = (curr_close / ma20) * 100
@@ -208,9 +203,9 @@ if st.button("🚀 맹점 완화형 고성능 복합 스크리닝 시작", use_c
                         "RSI": rsi_val, "이격도(20일)": f"{disparity_20:.1f}%"
                     }
                     
-                    # 🛡️ [공격형 확장 수치 튜닝 이식 부위]
-                    # 이격도 제한을 110%로 높이고 RSI 상한을 78로 확장, 거래량 기준은 60%로 완화하여 주도주 포착률 극대화
-                    if (curr_close > ma20 > ma60) and (disparity_20 <= 110.0) and is_clean_body and (40 <= rsi_val <= 78) and (vol_ratio >= 0.6):
+                    # 🛡️ [맹점 보완 최소화 부위]
+                    # 이격도 115%까지 대폭 확장, 위꼬리 방어 해제, RSI 85까지 허용, 거래량 수치 30% 조건 완화
+                    if (curr_close > ma20 > ma60) and (disparity_20 <= 115.0) and (35 <= rsi_val <= 85) and (vol_ratio >= 0.3):
                         suc_temp.append(stock_info)
                     elif (curr_close > ma20 > ma60):
                         war_temp.append(stock_info)
