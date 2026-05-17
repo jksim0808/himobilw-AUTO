@@ -6,15 +6,15 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (종합 완결본)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결본)", layout="wide")
 
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-GEMINI_API_KEY = "AIzaSyDpOenIZEWKgsIsnOKZp-dnWJTsZ_WP8J8"  
+GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 실시간 내부 차트 엔진 탑재")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 국장 전용 지능형 차트 엔진")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -260,7 +260,7 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ [해결책 적용] 하단 실시간 트레이딩뷰 차트 위젯 구역
+# 🖥️ 하단 실시간 트레이딩뷰 차트 위젯 구역 (코스피/코스닥 자동 판별 탑재)
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
@@ -269,8 +269,18 @@ if st.session_state.clicked_stock:
     
     st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 기술적 분석 대시보드 차트")
     
-    # 한국 주식 시장 연동을 위한 티커 포맷팅 (예: KRX:005930)
-    tradingview_symbol = f"KRX:{s_code}"
+    # 코드를 분석하여 코스피(KRX)와 코스닥(KOSDAQ)을 자동 분기합니다.
+    try:
+        if int(s_code) % 10 == 0:
+            tradingview_symbol = f"KRX:{s_code}"
+        else:
+            tradingview_symbol = f"KOSDAQ:{s_code}"
+    except:
+        tradingview_symbol = f"KRX:{s_code}"
+        
+    # 예외 케이스 방어 (마스터 리스트 중 코스닥 대형주 직접 지정 보정)
+    if s_name in ["리노공업", "HPSP", "가온칩스", "오픈에지테크놀로지", "에이직랜드", "에코프로비엠", "엘앤에프", "알테오젠", "리그켐바이오", "에이비엘바이오", "휴젤", "메디톡스"]:
+        tradingview_symbol = f"KOSDAQ:{s_code}"
     
     tradingview_html = f"""
     <div class="tradingview-widget-container" style="height:600px; width:100%;">
@@ -288,7 +298,7 @@ if st.session_state.clicked_stock:
         "toolbar_bg": "#f1f3f6",
         "enable_publishing": false,
         "hide_side_toolbar": false,
-        "allow_symbol_change": false,
+        "allow_symbol_change": true,
         "container_id": "tradingview_chart_frame"
       }});
       </script>
