@@ -38,7 +38,6 @@ def get_gemini_recommended_stocks():
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {'Content-Type': 'application/json'}
         
-        # 구글 서버가 100% 수용하는 표준 JSON 가이드라인 주입
         prompt = (
             "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
             "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
@@ -60,12 +59,15 @@ def get_gemini_recommended_stocks():
             cleaned_result = text_result.strip().replace("\n", "").replace("`", "")
             if len(cleaned_result) > 20:
                 return cleaned_result
+        else:
+            # 구글 서버에서 반환한 상세 에러 코드를 화면에 표시
+            st.error(f"❌ 구글 API 서버 응답 실패 (코드 {response.status_code}): {response.text}")
         return BACKUP_50_STOCKS
-        
-except Exception as e:
-      st.error(f"AI 통신 에러 발생 원인: {e}") # 화면에 에러를 직접 출력
-      return BACKUP_50_STOCKS
 
+    except Exception as e:
+        # 시스템 통신 에러 자체를 화면에 표기
+        st.error(f"❌ AI 연동 통신망 에러 발생: {e}")
+        return BACKUP_50_STOCKS
 # 세션 초기화 영역
 if 'raw_input_area' not in st.session_state:
     st.session_state['raw_input_area'] = BACKUP_50_STOCKS
