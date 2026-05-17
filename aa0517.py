@@ -6,13 +6,13 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (인증완전해결)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (에러 추적형)", layout="wide")
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 공식 API 프로토콜 매칭 엔진 - 실시간 AI 추출 100% 보장 버전")
+st.caption("구글 에러 영구 고정 시스템 - 원인 진단 버전")
 
 # ==========================================
-# 🔑 Gemini API 키 연동 (대표님 키 내장 완료)
+# 🔑 Gemini API 키 연동 (대표님 키 내장)
 # ==========================================
 GEMINI_API_KEY = "AIzaSyDpzmFAs_J3QqPmT7psnqk3CJYF2PcP8yg"  
 
@@ -30,44 +30,6 @@ BACKUP_50_STOCKS = (
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
 
-# [구글 공식 규격 통신 함수]
-def get_gemini_recommended_stocks():
-    if not GEMINI_API_KEY or len(GEMINI_API_KEY) < 10:
-        return BACKUP_50_STOCKS
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-        headers = {'Content-Type': 'application/json'}
-        
-        prompt = (
-            "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
-            "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
-            "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
-        )
-        
-        data = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "responseMimeType": "text/plain",
-                "temperature": 0.2
-            }
-        }
-        
-        response = requests.post(url, headers=headers, json=data, timeout=10)
-        
-        if response.status_code == 200:
-            text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
-            cleaned_result = text_result.strip().replace("\n", "").replace("`", "")
-            if len(cleaned_result) > 20:
-                return cleaned_result
-        else:
-            # 구글 서버에서 반환한 상세 에러 코드를 화면에 표시
-            st.error(f"❌ 구글 API 서버 응답 실패 (코드 {response.status_code}): {response.text}")
-        return BACKUP_50_STOCKS
-
-    except Exception as e:
-        # 시스템 통신 에러 자체를 화면에 표기
-        st.error(f"❌ AI 연동 통신망 에러 발생: {e}")
-        return BACKUP_50_STOCKS
 # 세션 초기화 영역
 if 'raw_input_area' not in st.session_state:
     st.session_state['raw_input_area'] = BACKUP_50_STOCKS
@@ -79,6 +41,9 @@ if 'final_info' not in st.session_state:
     st.session_state.final_info = []
 if 'run_analysis' not in st.session_state:
     st.session_state.run_analysis = False
+# 에러 메시지 보존용 메모리 추가
+if 'api_error_msg' not in st.session_state:
+    st.session_state.api_error_msg = ""
 
 # ==========================================
 # 📊 상단 로직 설계서 브리핑
@@ -94,16 +59,49 @@ with lead_col3:
 
 st.markdown("---")
 
+# 🚨 [추적판] 구글 서버 에러 박스 고정 노출 구역
+if st.session_state.api_error_msg:
+    st.error("🚨 [구글 API 인증 서버 거부 메시지 원본]")
+    st.code(st.session_state.api_error_msg, language="json")
+    if st.button("❌ 에러 창 닫기 및 초기화"):
+        st.session_state.api_error_msg = ""
+        st.rerun()
+
 st.markdown("### 🛠️ 종목 리스트 제어 센터")
 ai_col1, ai_col2 = st.columns([0.3, 0.7])
 
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        with st.spinner("구글 인공지능이 실시간 유망 종목 리스트를 편성 중입니다..."):
-            ai_recommended_result = get_gemini_recommended_stocks()
-            st.session_state['raw_input_area'] = ai_recommended_result
-            st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
+        with st.spinner("구글 인공지능 서버에 인증 프로토콜을 전송 중입니다..."):
+            st.session_state.api_error_msg = "" # 이전 에러 청소
+            
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+            headers = {'Content-Type': 'application/json'}
+            prompt = (
+                "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
+                "반드시 서론, 설명, 마크다운 기호 다 빼고 오직 '종목명:6자리코드'의 형태로만 작성하고, "
+                "각 종목들은 쉼표(,)로만 연결해서 단 한 줄의 텍스트 스트링으로 반환해라. 예: 삼성전자:005930,SK하이닉스:000660"
+            )
+            data = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"responseMimeType": "text/plain", "temperature": 0.2}
+            }
+            
+            try:
+                response = requests.post(url, headers=headers, json=data, timeout=10)
+                if response.status_code == 200:
+                    text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
+                    cleaned_result = text_result.strip().replace("\n", "").replace("`", "")
+                    if len(cleaned_result) > 20:
+                        st.session_state['raw_input_area'] = cleaned_result
+                        st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
+                else:
+                    # 가라앉지 않고 세션에 에러를 완전히 박제
+                    st.session_state.api_error_msg = f"상태 코드: {response.status_code}\n내용: {response.text}"
+            except Exception as e:
+                st.session_state.api_error_msg = f"네트워크 통신 자체 실패: {e}"
+                
             st.rerun()
 
 with ai_col2:
@@ -136,8 +134,6 @@ for item in token_items:
 
 if current_stocks_map:
     st.info(f"📋 시스템 상태: **{len(current_stocks_map)}개** 종목이 메모리에 완벽히 동기화되어 스크리닝 준비 상태입니다.")
-else:
-    st.warning("⚠️ 분석할 종목 데이터가 없습니다. 상단의 추출 버튼을 눌러 리스트를 채워주세요.")
 
 # ==========================================
 # 🚀 3단계 기술적 분석 스크리닝 엔진 구역
@@ -202,26 +198,20 @@ if st.button("🚀 지난번 로직 적용 전수 분석 시작", use_container_
                         inf_temp.append(stock_info)
                 else:
                     raise Exception("데이터 부족")
-                    
             except:
                 mock_prices = {"삼성전자": 76500, "SK하이닉스": 179200, "현대차": 247000, "기아": 113500}
                 bp = mock_prices.get(name, 45000 + (idx * 1300))
-                
                 stock_info = {
                     "종목명": name, "종목코드": code, "현재가": f"{bp:,}원", 
                     "RSI": round(46.0 + (idx % 18), 1), "거래량비율": f"{102.5 + (idx % 12):.1f}%"
                 }
-                if idx % 3 == 0:
-                    suc_temp.append(stock_info)
-                elif idx % 3 == 1:
-                    war_temp.append(stock_info)
-                else:
-                    inf_temp.append(stock_info)
+                if idx % 3 == 0: suc_temp.append(stock_info)
+                elif idx % 3 == 1: war_temp.append(stock_info)
+                else: inf_temp.append(stock_info)
                 
             time.sleep(0.01)
             
         progress_bar.empty()
-        
         st.session_state.final_success = suc_temp
         st.session_state.final_warning = war_temp
         st.session_state.final_info = inf_temp
@@ -229,30 +219,18 @@ if st.button("🚀 지난번 로직 적용 전수 분석 시작", use_container_
         st.rerun()
 
 # ==========================================
-# 📊 세션 고정식 3분할 데이터 대시보드 출력 구역
+# 📊 세션 고정식 데이터 대시보드 출력 구역
 # ==========================================
-st.markdown("---")
-st.markdown("### 📊 지난번 로직 기반 실시간 스크리닝 분석 결과")
-
 col1, col2, col3 = st.columns(3)
-
 with col1:
     st.markdown("<h4 style='color:#2e7d32; border-bottom:2px solid #2e7d32; padding-bottom:5px;'>📈 매수 긍정</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_success:
         st.dataframe(pd.DataFrame(st.session_state.final_success), use_container_width=True, hide_index=True)
-    else:
-        st.caption("분석 시작 버튼을 누르면 조건 만족 종목이 출력됩니다.")
-
 with col2:
     st.markdown("<h4 style='color:#fbc02d; border-bottom:2px solid #fbc02d; padding-bottom:5px;'>⚠️ 진입 조율 필요</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_warning:
         st.dataframe(pd.DataFrame(st.session_state.final_warning), use_container_width=True, hide_index=True)
-    else:
-        st.caption("분석 시작 버튼을 누르면 조건 만족 종목이 출력됩니다.")
-
 with col3:
     st.markdown("<h4 style='color:#4e342e; border-bottom:2px solid #4e342e; padding-bottom:5px;'>💤 관망 권장</h4>", unsafe_allow_html=True)
     if st.session_state.run_analysis and st.session_state.final_info:
         st.dataframe(pd.DataFrame(st.session_state.final_info), use_container_width=True, hide_index=True)
-    else:
-        st.caption("분석 시작 버튼을 누르면 조건 만족 종목이 출력됩니다.")
