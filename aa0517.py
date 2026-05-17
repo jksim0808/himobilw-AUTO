@@ -214,7 +214,7 @@ if st.button("🚀 맹점 보완 고성능 복합 스크리닝 시작", use_cont
                         "RSI": rsi_val, "이격도(20일)": f"{disparity_20:.1f}%"
                     }
                     
-                    if (curr_close > ma20 > ma60) and (disparity_20 <= 110.0) and is_clean_body and (45 <= rsi_val <= 75) and (vol_ratio >= 0.8):
+                    if (curr_close > ma20 > ma60) and (disparity_20 <= 115.0) and is_clean_body and (45 <= rsi_val <= 75) and (vol_ratio >= 0.8):
                         suc_temp.append(stock_info)
                     elif (curr_close > ma20 > ma60):
                         war_temp.append(stock_info)
