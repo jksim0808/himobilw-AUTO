@@ -14,7 +14,7 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결�
 GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 2026 최신형 차트 엔진 탑재")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 네이버 실시간 차트 엔진 탑재")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -260,26 +260,25 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ [100% 원천 해결] 신형 고성능 트레이딩뷰 실시간 차트 임베드 엔진
+# 🖥️ [정책 우회] 네이버 증권 고성능 실시간 차트 탑재 구역
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
     s_name = st.session_state.clicked_stock["종목명"]
     s_code = st.session_state.clicked_stock["종목코드"]
     
-    st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 기술적 분석 대시보드 차트")
+    st.markdown(f"### 📊 [{s_name} : {s_code}] 국내 시장 최적화 실시간 분석 차트")
     
-    # 💡 [핵심 격파 점검] 구형 자바스크립트 호출을 전부 걷어내고, 
-    # 트레이딩뷰 최신 표준 웹 컴포넌트 규격(widget-container)을 인라인 데이터 스트링으로 직주입합니다.
-    tradingview_html = f"""
-    <div class="tradingview-widget-container" style="width: 100%; height: 600px;">
-      <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=KRX%3A{s_code}&interval=D&symboledit=0&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=light&style=1&timezone=Asia%2FSeoul&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=ko&utm_source=localhost&utm_medium=widget&utm_campaign=chart&utm_term=KRX%3A{s_code}" 
+    # 트레이딩뷰의 국가 제한 정책을 우회하기 위해 네이버 금융 공식 실시간 종합 차트 컴포넌트를 사용합니다.
+    naver_chart_html = f"""
+    <div style="width: 100%; height: 600px;">
+      <iframe src="https://ssl.pstatic.net/imgstock/chart/itemstock/itemmain.nhn?code={s_code}" 
               style="width: 100%; height: 100%; border: none; margin: 0; padding: 0;" 
               allowfullscreen></iframe>
     </div>
     """
-    st.components.v1.html(tradingview_html, height=620)
+    st.components.v1.html(naver_chart_html, height=620)
 else:
     if st.session_state.run_analysis:
         st.markdown("---")
-        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 하단에 해당 종목의 실시간 캔들 차트 전광판이 에러 없이 즉시 펼쳐집니다.")
+        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 하단에 국내 전용 실시간 캔들 차트 전광판이 에러 없이 즉시 펼쳐집니다.")
