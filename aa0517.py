@@ -14,7 +14,7 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결�
 GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 야후 글로벌 실시간 차트 엔진 탑재")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 네이버 금융 새탭 직결 엔진")
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -260,31 +260,38 @@ with col3:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
 # ==========================================
-# 🖥️ [보안 해제 완료] 야후 파이낸스 글로벌 실시간 대화형 차트 엔진
+# 🖥️ [보안 영구 우회] 네이버 금융 종합 차트 새 탭 직결 제어 장치
 # ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
     s_name = st.session_state.clicked_stock["종목명"]
     s_code = st.session_state.clicked_stock["종목코드"]
     
-    st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 글로벌 인터랙티브 차트 전광판")
+    st.markdown(f"### 🔗 [{s_name} : {s_code}] 실시간 차트 원클릭 연동")
     
-    # 코스피/코스닥 구분에 맞게 접미사 자동 완성 (.KS 또는 .KQ)
-    if int(s_code) % 10 != 0:
-        yahoo_symbol = f"{s_code}.KQ"
-    else:
-        yahoo_symbol = f"{s_code}.KS"
-        
-    # 보안 정책 및 로그인 유무와 상관없이 전 세계에 무료 개방된 야후 파이낸스 임베드 주소입니다.
-    yahoo_chart_html = f"""
-    <div style="width: 100%; height: 600px;">
-      <iframe src="https://finance.yahoo.com/chart/{yahoo_symbol}" 
-              style="width: 100%; height: 100%; border: 1px solid #ddd; border-radius: 8px; margin: 0; padding: 0;" 
-              allowfullscreen></iframe>
-    </div>
-    """
-    st.components.v1.html(yahoo_chart_html, height=620)
+    # 보안 차단을 원천 차단하기 위해 네이버 금융 차트 새 창 열기 주소 구성
+    naver_full_url = f"https://finance.naver.com/item/fchart.naver?code={s_code}"
+    
+    # 대표님께서 즉시 클릭하여 새 창으로 넓게 보실 수 있는 고성능 링크 버튼 배치
+    st.markdown(
+        f"""
+        <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; border: 1px solid #dee2e6; text-align: center;">
+            <p style="font-size: 16px; margin-bottom: 15px; color: #333;">
+                선택하신 <b>{s_name}({s_code})</b>의 네이버 금융 실시간 종합 분석 차트 준비가 완료되었습니다.
+            </p>
+            <a href="{naver_full_url}" target="_blank" style="text-decoration: none;">
+                <button style="background-color: #24af5f; color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    📈 네이버 금융 실시간 종합 차트 열기 (새 탭)
+                </button>
+            </a>
+            <p style="font-size: 12px; margin-top: 10px; color: #666;">
+                * 어떤 보안 차단 정책도 받지 않는 가장 안전하고 정확한 정식 조회 방식입니다.
+            </p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 else:
     if st.session_state.run_analysis:
         st.markdown("---")
-        st.info("💡 위의 표에서 종목 줄(Row)을 툭 클릭하시면, 하단에 차단 없는 글로벌 실시간 캔들 차트가 즉시 펼쳐집니다.")
+        st.info("💡 위의 1, 2, 3단계 표에서 분석을 원하시는 종목의 행(Row)을 툭 클릭하시면, 하단에 네이버 종합 차트 열기 마스터 버튼이 즉시 활성화됩니다.")
