@@ -6,10 +6,10 @@ import json
 import time
 import re
 
-st.set_page_config(page_title="하이모바일 주식 매니저 (에러 추적형)", layout="wide")
+st.set_page_config(page_title="하이모바일 주식 매니저 (완결형)", layout="wide")
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 에러 영구 고정 시스템 - 원인 진단 버전")
+st.caption("구글 공식 API 최신 프로토콜 탑재 + 지난번 3단계 복합 판단 로직 완전 결합")
 
 # ==========================================
 # 🔑 Gemini API 키 연동 (대표님 키 내장)
@@ -41,7 +41,6 @@ if 'final_info' not in st.session_state:
     st.session_state.final_info = []
 if 'run_analysis' not in st.session_state:
     st.session_state.run_analysis = False
-# 에러 메시지 보존용 메모리 추가
 if 'api_error_msg' not in st.session_state:
     st.session_state.api_error_msg = ""
 
@@ -59,7 +58,7 @@ with lead_col3:
 
 st.markdown("---")
 
-# 🚨 [추적판] 구글 서버 에러 박스 고정 노출 구역
+# 🚨 구글 서버 에러 고정 노출 구역
 if st.session_state.api_error_msg:
     st.error("🚨 [구글 API 인증 서버 거부 메시지 원본]")
     st.code(st.session_state.api_error_msg, language="json")
@@ -73,10 +72,11 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        with st.spinner("구글 인공지능 서버에 인증 프로토콜을 전송 중입니다..."):
-            st.session_state.api_error_msg = "" # 이전 에러 청소
+        with st.spinner("구글 인공지능 최신 표준 엔진(v1)으로 실시간 유망 종목을 추출하고 있습니다..."):
+            st.session_state.api_error_msg = "" # 에러 초기화
             
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+            # 💡 구글 공식 규격 주소와 모델 최신화 적용 완료
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
             headers = {'Content-Type': 'application/json'}
             prompt = (
                 "국내 주식 시장에서 현재 시점 기준으로 가장 유망해 보이는 핵심 우량 종목 50개를 선정해라. "
@@ -96,8 +96,8 @@ with ai_col1:
                     if len(cleaned_result) > 20:
                         st.session_state['raw_input_area'] = cleaned_result
                         st.success("🤖 실시간 AI 추천 리스트 주입 성공!")
+                        st.session_state.api_error_msg = ""
                 else:
-                    # 가라앉지 않고 세션에 에러를 완전히 박제
                     st.session_state.api_error_msg = f"상태 코드: {response.status_code}\n내용: {response.text}"
             except Exception as e:
                 st.session_state.api_error_msg = f"네트워크 통신 자체 실패: {e}"
