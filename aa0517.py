@@ -15,7 +15,7 @@ st.caption("실시간 Gemini AI 추출 엔진 + 지난번 3단계 복합 판단 
 # 🔑 [복구] Gemini API 설정 구역
 # ==========================================
 # 대표님의 실제 발급받으신 구글 API 키를 아래 따옴표 안에 넣으시면 실시간 AI 추천이 작동합니다!
-GEMINI_API_KEY = "AIzaSyBx-QMFR_RfjVMDr3f4WUbVUh2xV1qKgds"  
+GEMINI_API_KEY = "AIzaSyDpzmFAs_J3QqPmT7psnqk3CJYF2PcP8yg"  
 
 # AI 호출 실패 시 시스템 다운을 막기 위한 철벽 백업 50개 마스터 리스트
 BACKUP_50_STOCKS = (
