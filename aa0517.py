@@ -61,8 +61,9 @@ def get_gemini_recommended_stocks():
             if len(cleaned_result) > 20:
                 return cleaned_result
         return BACKUP_50_STOCKS
-    except Exception:
-        return BACKUP_50_STOCKS
+   except Exception as e:
+      st.error(f"AI 통신 에러 발생 원인: {e}") # 화면에 에러를 직접 출력
+      return BACKUP_50_STOCKS
 
 # 세션 초기화 영역
 if 'raw_input_area' not in st.session_state:
