@@ -11,7 +11,7 @@ st.set_page_config(page_title="하이모바일 주식 매니저 (필터 개방�
 # ==========================================
 # 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
 # ==========================================
-GEMINI_API_KEY = "새로_발급받은_API_키를_여기에_붙여넣으세요"  
+GEMINI_API_KEY = "AIzaSyDpOenIZEWKgsIsnOKZp-dnWJTsZ_WP8J8"  
 
 st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
 st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 정배열 전면 개방 시스템")
