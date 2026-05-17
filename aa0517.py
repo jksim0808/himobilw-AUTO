@@ -19,7 +19,7 @@ GEMINI_API_KEY = "AIzaSyBx-QMFR_RfjVMDr3f4WUbVUh2xV1qKgds"
 
 # AI 호출 실패 시 시스템 다운을 막기 위한 철벽 백업 50개 마스터 리스트
 BACKUP_50_STOCKS = (
- POSCO홀딩스:005490"
+ "POSCO홀딩스:005490"
 )
 
 # [AI 통신 함수 정의]
