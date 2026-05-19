@@ -8,25 +8,14 @@ import re
 
 st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결본)", layout="wide")
 
-# 💡 [보안 강화 가이드] API 키를 코드에 직접 노출하면 구글 보안 봇이 이를 실시간 감지하여 자동 정지시킵니다.
-# 따라서 사이드바에 직접 입력하시거나 Streamlit Secrets를 통해 안전하게 주입하는 것을 권장합니다.
+# ==========================================
+# 🔒 [보안 강화] 구글 API 키 자동 주입 (Secrets 연동)
+# ==========================================
+# 더 이상 코드나 화면상에 키를 직접 노출하지 않고, Streamlit Secrets에서만 비공개로 안전하게 호출합니다.
 GEMINI_API_KEY = ""
 
-# 1. 만약 Streamlit Secrets에 저장하셨다면 자동으로 불러옵니다.
 if "GEMINI_API_KEY" in st.secrets:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-
-# 2. 화면 왼쪽 사이드바에 API 키 입력창을 안전한 패스워드 형식(마스킹)으로 배치합니다.
-st.sidebar.subheader("🔒 API 보안 설정")
-user_input_key = st.sidebar.text_input(
-    "구글 Gemini API Key 입력", 
-    value=GEMINI_API_KEY, 
-    type="password", 
-    help="구글 AI 스튜디오(https://aistudio.google.com/)에서 새로 발급받은 API 키를 여기에 입력해 주세요. (Streamlit Secrets에 등록해 두셨다면 자동으로 마스킹되어 입력됩니다.)"
-)
-
-if user_input_key:
-    GEMINI_API_KEY = user_input_key
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -57,6 +46,9 @@ if 'api_error_msg' not in st.session_state:
 if 'clicked_stock' not in st.session_state:
     st.session_state.clicked_stock = None
 
+# ==========================================
+# 📊 복합 로직 대시보드 브리핑
+# ==========================================
 st.markdown("### 🔓 필터가 완화된 3단계 복합 판단 로직")
 lead_col1, lead_col2, lead_col3 = st.columns(3)
 with lead_col1:
@@ -81,8 +73,9 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
+        # Secrets에 키가 아예 설정되지 않은 상황 방어
         if not GEMINI_API_KEY or GEMINI_API_KEY.strip() == "":
-            st.error("🔒 왼쪽 사이드바에 새로 발급받으신 구글 API 키를 먼저 입력해 주세요!")
+            st.error("🔒 구글 API 키가 설정되지 않았습니다. Streamlit Secrets 대시보드에 'GEMINI_API_KEY' 항목으로 키를 입력해 주세요!")
         else:
             status_container = st.empty()
             with status_container.container():
@@ -101,6 +94,7 @@ with ai_col1:
             success_communication = False
             response = None
             
+            # 구글 서버 통신 지연에 대응한 3단계 자동 재시도 로직
             for attempt in range(1, 4):
                 try:
                     status_container.warning(f"⏳ [통신 시도 {attempt}/3단계] 구글 인공지능 망 연결 중...")
@@ -158,6 +152,9 @@ for item in token_items:
 if current_stocks_map:
     st.info(f"📋 시스템 상태: **{len(current_stocks_map)}개** 종목 실시간 연동 완료")
 
+# ==========================================
+# 🚀 스크리닝 엔진
+# ==========================================
 if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_container_width=True):
     if not current_stocks_map:
         st.error("오류: 현재 파싱된 종목이 전혀 없습니다.")
@@ -242,6 +239,9 @@ if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_c
         st.session_state.clicked_stock = None
         st.rerun()
 
+# ==========================================
+# 📊 테이블 출력 구역
+# ==========================================
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -268,6 +268,9 @@ with col3:
         if event_inf and "selection" in event_inf and "rows" in event_inf["selection"] and event_inf["selection"]["rows"]:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
+# ==========================================
+# 🖥️ 네이버 모바일 웹 우회형 즉시 표출 차트 엔진
+# ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
     s_name = st.session_state.clicked_stock["종목명"]
