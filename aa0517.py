@@ -8,13 +8,25 @@ import re
 
 st.set_page_config(page_title="하이모바일 주식 매니저 (최종 완결본)", layout="wide")
 
-# ==========================================
-# 🔑 [필수 수정] 새로 발급받으신 구글 API 키를 여기에 넣어주세요!
-# ==========================================
-GEMINI_API_KEY = "AIzaSyDMsTxiABHwigPgL9gSv1ii6-YQbS_LMBE"  
+# 💡 [보안 강화 가이드] API 키를 코드에 직접 노출하면 구글 보안 봇이 이를 실시간 감지하여 자동 정지시킵니다.
+# 따라서 사이드바에 직접 입력하시거나 Streamlit Secrets를 통해 안전하게 주입하는 것을 권장합니다.
+GEMINI_API_KEY = ""
 
-st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
-st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 네이버 실시간 차트 내장 표출 엔진")
+# 1. 만약 Streamlit Secrets에 저장하셨다면 자동으로 불러옵니다.
+if "GEMINI_API_KEY" in st.secrets:
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+
+# 2. 화면 왼쪽 사이드바에 API 키 입력창을 안전한 패스워드 형식(마스킹)으로 배치합니다.
+st.sidebar.subheader("🔒 API 보안 설정")
+user_input_key = st.sidebar.text_input(
+    "구글 Gemini API Key 입력", 
+    value=GEMINI_API_KEY, 
+    type="password", 
+    help="구글 AI 스튜디오(https://aistudio.google.com/)에서 새로 발급받은 API 키를 여기에 입력해 주세요."
+)
+
+if user_input_key:
+    GEMINI_API_KEY = user_input_key
 
 # 백업용 마스터 리스트 (시장의 핵심 우량주 50개)
 BACKUP_50_STOCKS = (
@@ -30,7 +42,6 @@ BACKUP_50_STOCKS = (
     "하나금융지주:086790, 메리츠금융지주:138040, 삼성물산:028260, SK:034730, POSCO홀딩스:005490"
 )
 
-# 세션 상태 초기화
 if 'raw_input_area' not in st.session_state:
     st.session_state['raw_input_area'] = BACKUP_50_STOCKS
 if 'final_success' not in st.session_state:
@@ -46,9 +57,9 @@ if 'api_error_msg' not in st.session_state:
 if 'clicked_stock' not in st.session_state:
     st.session_state.clicked_stock = None
 
-# ==========================================
-# 📊 복합 로직 대시보드 브리핑
-# ==========================================
+st.title("🤖 하이모바일 AI 결합 주식 스크리닝 매니저")
+st.caption("구글 최신 v1 표준 엔진(Gemini 2.5) 탑재 + 통신 지연 방어 + 필터 최소화 + 네이버 실시간 차트 내장 표출 엔진")
+
 st.markdown("### 🔓 필터가 완화된 3단계 복합 판단 로직")
 lead_col1, lead_col2, lead_col3 = st.columns(3)
 with lead_col1:
@@ -60,7 +71,6 @@ with lead_col3:
 
 st.markdown("---")
 
-# 에러 메세지 고정 구역
 if st.session_state.api_error_msg:
     st.error("🚨 [구글 API 인증 및 네트워크 통신 상태 에러 확인]")
     st.code(st.session_state.api_error_msg, language="json")
@@ -74,8 +84,8 @@ ai_col1, ai_col2 = st.columns([0.3, 0.7])
 with ai_col1:
     st.write("")
     if st.button("🪄 Gemini AI 유망 종목 50개 자동 추출", use_container_width=True, type="primary"):
-        if "새로_발급받은" in GEMINI_API_KEY or GEMINI_API_KEY.strip() == "":
-            st.error("🔒 17번째 줄에 새로 발급받으신 구글 API 키를 먼저 입력해 주셔야 작동합니다!")
+        if not GEMINI_API_KEY or GEMINI_API_KEY.strip() == "":
+            st.error("🔒 왼쪽 사이드바에 새로 발급받으신 구글 API 키를 먼저 입력해 주세요!")
         else:
             status_container = st.empty()
             with status_container.container():
@@ -112,7 +122,9 @@ with ai_col1:
             if success_communication and response is not None:
                 try:
                     text_result = response.json()['candidates'][0]['content']['parts'][0]['text']
-                    cleaned_result = text_result.strip().replace("\n", "").replace("`", "").replace(" ", "")
+                    text_result = text_result.replace("```", "").replace("`", "")
+                    cleaned_result = text_result.strip().replace("\n", "").replace(" ", "")
+                    
                     if len(cleaned_result) > 20:
                         st.session_state['raw_input_area'] = cleaned_result
                         st.success("🤖 AI 추천 리스트 주입 성공!")
@@ -124,12 +136,14 @@ with ai_col1:
                 if response is not None:
                     st.session_state.api_error_msg = f"구글 서버 최종 거부\n상태 코드: {response.status_code}\n내용: {response.text}"
                 else:
-                    st.session_state.api_error_msg = "국제 인터넷망 지연 또는 구글 API 키 유출 차단 상태입니다. 17번째 줄의 키 값을 재점검하십시오."
+                    st.session_state.api_error_msg = "국제 인터넷망 지연 또는 구글 API 키 유출 차단 상태입니다. API 키 값을 재점검하십시오."
             
             st.rerun()
 
 with ai_col2:
-    user_stocks_input = st.text_area("현재 분석 대상 종목 필드", height=80, key="raw_input_area")
+    user_stocks_input = st.text_area("현재 분석 대상 종목 필드", value=st.session_state['raw_input_area'], height=80, key="raw_input_field")
+    if user_stocks_input != st.session_state['raw_input_area']:
+        st.session_state['raw_input_area'] = user_stocks_input
 
 # 동기화 파싱 파이프라인
 current_stocks_map = {}
@@ -148,9 +162,6 @@ for item in token_items:
 if current_stocks_map:
     st.info(f"📋 시스템 상태: **{len(current_stocks_map)}개** 종목 실시간 연동 완료")
 
-# ==========================================
-# 🚀 스크리닝 엔진
-# ==========================================
 if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_container_width=True):
     if not current_stocks_map:
         st.error("오류: 현재 파싱된 종목이 전혀 없습니다.")
@@ -177,7 +188,12 @@ if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_c
                 highs = chart_data['indicators']['quote'][0]['high']
                 lows = chart_data['indicators']['quote'][0]['low']
                 
-                df = pd.DataFrame({'Close': closes, 'Volume': volumes, 'High': highs, 'Low': lows}).dropna()
+                df = pd.DataFrame({
+                    'Close': [float(x) if x is not None else np.nan for x in closes],
+                    'Volume': [float(x) if x is not None else np.nan for x in volumes],
+                    'High': [float(x) if x is not None else np.nan for x in highs],
+                    'Low': [float(x) if x is not None else np.nan for x in lows]
+                }).dropna()
                 
                 if len(df) >= 60:
                     df['MA20'] = df['Close'].rolling(window=20).mean()
@@ -230,9 +246,6 @@ if st.button("🚀 맹점 전면 개방형 고성능 스크리닝 시작", use_c
         st.session_state.clicked_stock = None
         st.rerun()
 
-# ==========================================
-# 📊 테이블 출력 구역
-# ==========================================
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -240,7 +253,7 @@ with col1:
     if st.session_state.run_analysis and st.session_state.final_success:
         df_suc = pd.DataFrame(st.session_state.final_success)
         event_suc = st.dataframe(df_suc, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
-        if event_suc and event_suc.get("selection") and event_suc["selection"].get("rows"):
+        if event_suc and "selection" in event_suc and "rows" in event_suc["selection"] and event_suc["selection"]["rows"]:
             st.session_state.clicked_stock = st.session_state.final_success[event_suc["selection"]["rows"][0]]
 
 with col2:
@@ -248,7 +261,7 @@ with col2:
     if st.session_state.run_analysis and st.session_state.final_warning:
         df_war = pd.DataFrame(st.session_state.final_warning)
         event_war = st.dataframe(df_war, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
-        if event_war and event_war.get("selection") and event_war["selection"].get("rows"):
+        if event_war and "selection" in event_war and "rows" in event_war["selection"] and event_war["selection"]["rows"]:
             st.session_state.clicked_stock = st.session_state.final_warning[event_war["selection"]["rows"][0]]
 
 with col3:
@@ -256,12 +269,9 @@ with col3:
     if st.session_state.run_analysis and st.session_state.final_info:
         df_inf = pd.DataFrame(st.session_state.final_info)
         event_inf = st.dataframe(df_inf, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
-        if event_inf and event_inf.get("selection") and event_inf["selection"].get("rows"):
+        if event_inf and "selection" in event_inf and "rows" in event_inf["selection"] and event_inf["selection"]["rows"]:
             st.session_state.clicked_stock = st.session_state.final_info[event_inf["selection"]["rows"][0]]
 
-# ==========================================
-# 🖥️ [보안 해제 성공] 네이버 모바일 웹 우회형 즉시 표출 차트 엔진
-# ==========================================
 if st.session_state.clicked_stock:
     st.markdown("---")
     s_name = st.session_state.clicked_stock["종목명"]
@@ -269,8 +279,6 @@ if st.session_state.clicked_stock:
     
     st.markdown(f"### 📊 [{s_name} : {s_code}] 실시간 종합 차트 (화면 내 즉시 표출)")
     
-    # 외부 프레임 호출을 허용하는 네이버 금융 공식 모바일 종합 차트 탭 주소입니다.
-    # 깨짐이나 거부 현상 없이 실시간 캔들, 거래량, 호가, 뉴스까지 한 화면 안에서 바로 구동됩니다.
     naver_mobile_chart_url = f"https://m.stock.naver.com/domestic/stock/{s_code}/total"
     
     naver_chart_html = f"""
