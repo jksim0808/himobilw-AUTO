@@ -163,9 +163,8 @@ with ai_col1:
             st.rerun()
 
 with ai_col2:
-    user_stocks_input = st.text_area("현재 분석 대상 종목 필드", value=st.session_state['raw_input_area'], height=80, key="raw_input_field")
-    if user_stocks_input != st.session_state['raw_input_area']:
-        st.session_state['raw_input_area'] = user_stocks_input
+    # st.session_state['raw_input_area']와 직접 연동하여 동기화 꼬임 현상을 완벽하게 방지합니다.
+    user_stocks_input = st.text_area("현재 분석 대상 종목 필드", height=80, key="raw_input_area")
 
 # 동기화 및 2단계 초정밀 파싱 파이프라인
 current_stocks_map = {}
