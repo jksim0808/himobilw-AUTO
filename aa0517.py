@@ -295,7 +295,7 @@ with col2:
         if st.session_state.final_warning:
             df_war = pd.DataFrame(st.session_state.final_warning)
             event_war = st.dataframe(df_war, use_container_width=True, hide_index=True, on_select="rerun", selection_mode="single-row")
-            if event_war and "selection" in event_war hoarding and "rows" in event_war["selection"] and event_war["selection"]["rows"]:
+            if event_war and "selection" in event_war and "rows" in event_war["selection"] and event_war["selection"]["rows"]:
                 st.session_state.clicked_stock = st.session_state.final_warning[event_war["selection"]["rows"][0]]
         else:
             st.info("조건 만족 주식이 없습니다.")
